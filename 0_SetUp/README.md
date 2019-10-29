@@ -28,8 +28,6 @@ services and to ensure you do not leave behind any resources from the workshop.
 
 [AWS CloudFormation][cloudformation] allows you to model your entire infrastructure with a JSON or YAML template. For this workshop, you will be deploying the architecture for all three modules with CloudFormation, and then you will walk through a streaming pattern in each module.
 
-**:white_check_mark: Step-by-step Instructions**
-
 1. Go to the AWS Management Console and type **CloudFormation** in the **Find Services** search bar. Click enter to go to the CloudFormation console.
    
 1. Click **Create Stack**.
@@ -42,11 +40,9 @@ services and to ensure you do not leave behind any resources from the workshop.
 
 1. TODO 
 
-
-
 ### Next
 
 :white_check_mark: Continue to the first module: [Collect & De-Identify Data][collect-deidentify].
 
 [cloudformation]: https://aws.amazon.com/cloudformation/
-[collect-deidentify]: 1_CollectDeIdentify/
+[collect-deidentify]: ../1_CollectDeIdentify/

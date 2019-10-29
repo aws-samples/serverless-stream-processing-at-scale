@@ -101,3 +101,12 @@ Now you will use a scheduled CloudWatch Event to trigger the **Publish** Lambda 
 
 1. You can confirm that you were successful by going back to the **Lambda** console and checking the **Invocations** graph under **Monitoring**. You will have to wait a couple minutes for data to start coming into the dashboard.
 
+### Summary
+TODO
+
+### Next
+
+:white_check_mark: Continue to the second module: [Enrich Data][enrich].
+
+[enrich]: ../2_Enrich/
+

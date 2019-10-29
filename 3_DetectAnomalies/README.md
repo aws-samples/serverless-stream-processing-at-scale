@@ -8,4 +8,14 @@ The CloudFormation template that you ran during Set Up deployed the following:
 
 * TODO
 
-### TODO
+### Instructions
+TODO
+
+### Summary
+TODO
+
+### Next
+
+:white_check_mark: [Clean Up][cleanup].
+
+[cleanup]: ../4_CleanUp/
