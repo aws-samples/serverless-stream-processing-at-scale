@@ -32,13 +32,26 @@ services and to ensure you do not leave behind any resources from the workshop.
    
 1. Click **Create Stack**.
 
-1. Under **Specify template**, select **Upload a template file**.
-
-1. Download TODO.yaml from this repository, and upload it to the CloudFormation console.
+1. Under **Specify template**, insert this **Amazon S3 URL**: `https://serverless-stream-processing.s3-us-west-2.amazonaws.com/architecture.yaml`
 
 1. Click **Next**.
 
-1. TODO 
+1. Type in a **Stack name** - something like **Streaming Workshop**.
+
+1. Under **Parameters**, type in an **Email** that you have access to, and a unique **S3 Bucket Name**. 
+
+	*Note that S3 Bucket names are globaly unique, so if you have the same initials as another participant, you may want to use your full name to ensure your bucket name is unique.*
+
+1. Click **Next** twice, until you get to the **Review** page.
+
+1. Scroll to the bottom and check all three acknowledgement boxes.
+
+1. Click **Create stack**.
+
+1. The stack will take a few minutes to deploy. In the meantime, you can review the architecture diagram or start reading the instructions for the first module. 
+
+1. You can begin the first module when the stack status is **CREATE_COMPLETE**.
+
 
 ### Next
 

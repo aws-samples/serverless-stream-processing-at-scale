@@ -1,6 +1,6 @@
 ## Collect & De-Identify Data
 
-In this module, you'll see how you can ingest real-time sensor data into **AWS IoT Core**, process it using an **IoT Lambda Rule**, and batch incoming data into S3 using **Kinesis Firehose**.
+In this module, you'll see how you can ingest real-time sensor data into **AWS IoT Core**, process it using an **IoT Lambda Rule**, and batch incoming data into S3 using **Kinesis Firehose**. In this case, the Lambda Rule is used to strip the PHI/PII attributes from the incomind data before further processing.
 
 ### What was created
 

@@ -1,0 +1,630 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Serverless Stream Processing at Scale
+  **WARNING** You will be billed for the AWS resources used if you create a stack from this template.
+  Copyright [2019] Amazon.com, Inc. or its affiliates. All Rights Reserved.
+  Licensed under the Apache License, Version 2.0 (the "License").
+  You may not use this file except in compliance with the License.
+  A copy of the License is located at http://aws.amazon.com/apache2.0/ or in the "license"
+  file accompanying this file. This file is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
+  for the specific language governing permissions and limitations under the License.
+
+Mappings:
+  Variables:
+    LambdaBucket: 
+      Name: serverless-stream-processing
+
+Parameters:
+  SensorDataBucketName:
+    Description: Sensor Data S3 Bucket Name
+    Default: yourinitials-sensor-data
+    Type: String
+  Email:
+    Description: Email to Recieve Alerts
+    Default: your-email@mail.com
+    Type: String
+
+Resources:
+
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: !Ref SensorDataBucketName
+      AccessControl: Private
+
+  # Module 1 --------------------------------------------------------------------------------------
+
+  # Lambda function that publishes simulated device data to an MQTT Topic
+  Publish:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: Publish
+      Handler: Publish.lambda_handler
+      Runtime: python3.7
+      CodeUri:
+        Bucket: !FindInMap [Variables,LambdaBucket,Name]
+        Key: Publish.zip
+      Description: Generates random life support device sensor data
+      MemorySize: 1536
+      Timeout: 300
+      Policies:
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+        - arn:aws:iam::aws:policy/AWSIoTFullAccess
+      Environment:
+        Variables:
+          IoTTopic: LifeSupportDevice/Sensor
+
+  # Lambda function that puts PHI/PII data in dynamo, de-identified data in Firehose
+  DeIdentify:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: DeIdentify
+      Handler: DeIdentify.lambda_handler
+      Runtime: python3.7
+      CodeUri:
+        Bucket: !FindInMap [Variables,LambdaBucket,Name]
+        Key: DeIdentify.zip
+      Description: Removes PHI/PII from message, inserts it into DynamoDB, and puts modified message into Kinesis Firehose
+      MemorySize: 1536
+      Timeout: 300
+      Policies:
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+        - arn:aws:iam::aws:policy/AmazonKinesisFirehoseFullAccess
+        - arn:aws:iam::aws:policy/AWSIoTFullAccess
+      Environment:
+        Variables:
+          TableName: PatientReference
+          DeliveryStream: SensorDataCollection
+      Events:
+       IoT:
+         Type: IoTRule
+         Properties:
+            AwsIotSqlVersion: "2016-03-23"
+            Sql: "SELECT * FROM 'LifeSupportDevice/Sensor'"
+
+  # DynamoDB to store encrypted PHI/PII data
+  PatientReference:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: PatientReference
+      AttributeDefinitions:
+        - AttributeName: patient_id
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: patient_id
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 50
+        WriteCapacityUnits: 5
+
+  # Module 2 --------------------------------------------------------------------------------------
+
+  # Kinesis Firehose that takes in de-identified data, and enriches the data with metadata from dynamo 
+  IngestStream:
+    Type: AWS::KinesisFirehose::DeliveryStream
+    Properties:
+      DeliveryStreamName: IngestStream
+      DeliveryStreamType: DirectPut
+      ExtendedS3DestinationConfiguration:
+        RoleARN: !GetAtt IngestStreamRole.Arn
+        BucketARN: !GetAtt S3Bucket.Arn
+        Prefix: enriched/
+        BufferingHints:
+          SizeInMBs: 100
+          IntervalInSeconds: 300
+        CompressionFormat: UNCOMPRESSED
+        ProcessingConfiguration:
+          Enabled: true
+          Processors:
+            - Type: Lambda
+              Parameters:
+                - ParameterName: LambdaArn
+                  ParameterValue: !GetAtt FirehoseTransform.Arn
+        S3BackupMode: Enabled
+        S3BackupConfiguration:
+          RoleARN: !GetAtt IngestStreamRole.Arn
+          BucketARN: !GetAtt S3Bucket.Arn
+          Prefix: de-identified/
+          BufferingHints:
+            SizeInMBs: 100
+            IntervalInSeconds: 300
+          CompressionFormat: UNCOMPRESSED
+        CloudWatchLoggingOptions:
+          Enabled: true
+          LogGroupName: '/aws/kinesisfirehose/IngestStream'
+          LogStreamName: S3Delivery
+
+  IngestStreamRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - firehose.amazonaws.com
+          Action:
+          - sts:AssumeRole
+          Condition:
+            StringEquals:
+              sts:ExternalId: !Ref AWS::AccountId
+      Policies:
+      - PolicyName: S3_ReadWrite
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - s3:AbortMultipartUpload
+            - s3:GetBucketLocation
+            - s3:GetObject
+            - s3:ListBucket
+            - s3:ListBucketMultipartUploads
+            - s3:PutObject
+            Resource:
+              - !Sub "arn:aws:s3:::${S3Bucket}/*"
+              - !Sub "arn:aws:s3:::${S3Bucket}"
+      - PolicyName: CWLogs_Write
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/kinesisfirehose/*"
+      - PolicyName: Lambda_Invoke
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - lambda:InvokeFunction
+            - lambda:GetFunctionConfiguration
+            Resource:
+            - !GetAtt FirehoseTransform.Arn
+
+  # Lambda function that enriches data with information from dynamo
+  FirehoseTransform:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: firehoseTransform.lambda_handler
+      Runtime: python3.7
+      CodeUri: 
+        Bucket: !FindInMap [Variables,LambdaBucket,Name]
+        Key: FirehoseTransform.zip
+      FunctionName: FirehoseTransform
+      Description: Transforms and enriches messages ingested by a Firehose delivery stream
+      MemorySize: 1536
+      Timeout: 300
+      Tracing: Active
+      Policies:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
+        - Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - dynamodb:GetItem
+            - dynamodb:BatchGetItem
+            Resource: !GetAtt DeviceDetails.Arn
+      Environment:
+        Variables:
+          TABLE_NAME: DeviceDetails
+
+  # Dynamo table storing device metadata
+  DeviceDetails:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: DeviceDetails
+      AttributeDefinitions:
+        - AttributeName: device_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: device_id
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 50
+        WriteCapacityUnits: 5
+
+  # Lambda function used to populate the DeviceDetails table with sample data
+  PopulateTable:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: PopulateTable.lambda_handler
+      Runtime: python3.7
+      CodeUri: 
+        Bucket: !FindInMap [Variables,LambdaBucket,Name]
+        Key: PopulateTable.zip
+      FunctionName: PopulateTable
+      Description: Populates DynamoDB table with sample device information
+      MemorySize: 1536
+      Timeout: 300
+      Policies:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - dynamodb:PutItem
+            Resource: !GetAtt DeviceDetails.Arn
+      Environment:
+        Variables:
+          TABLE_NAME: DeviceDetails
+
+  # Invoke the PopulateTable Lambda function while this template is running
+  InvokePopulateTable:
+    Type: Custom::InvokePopulateTable
+    Properties:
+      ServiceToken: !GetAtt PopulateTable.Arn
+
+  # CloudWatch Dashboard for easy monitoring
+  CWDashBoard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: Streaming_ITL
+      DashboardBody:
+        !Sub |
+          {
+            "widgets": [
+              {
+                "type": "metric",
+                "x": 0,
+                "y": 0,
+                "width": 24,
+                "height": 6,
+                "properties": {
+                  "view": "timeSeries",
+                  "stacked": false,
+                  "metrics": [
+                    [
+                      "AWS/Lambda",
+                      "Duration",
+                      "FunctionName",
+                      "FirehoseTransform",
+                      {
+                        "period": 60,
+                        "stat": "Average"
+                      }
+                    ],
+                    [
+                      ".",
+                      "Invocations",
+                      ".",
+                      ".",
+                      {
+                        "period": 60,
+                        "yAxis": "right",
+                        "stat": "Sum",
+                        "color": "#2ca02c"
+                      }
+                    ],
+                    [
+                      ".",
+                      "Errors",
+                      ".",
+                      ".",
+                      {
+                        "period": 60,
+                        "stat": "Sum",
+                        "yAxis": "right",
+                        "color": "#d62728"
+                      }
+                    ],
+                    [
+                      ".",
+                      "Throttles",
+                      ".",
+                      ".",
+                      {
+                        "period": 60,
+                        "stat": "Sum",
+                        "yAxis": "right",
+                        "color": "#ff7f0e"
+                      }
+                    ]
+                  ],
+                  "region": "${AWS::Region}",
+                  "title": "Lambda",
+                  "period": 60
+                }
+              },
+              {
+                "type": "metric",
+                "x": 0,
+                "y": 6,
+                "width": 24,
+                "height": 6,
+                "properties": {
+                  "view": "timeSeries",
+                  "stacked": false,
+                  "metrics": [
+                    [
+                      "AWS/Firehose",
+                      "ExecuteProcessing.Duration",
+                      "DeliveryStreamName",
+                      "IngestStream",
+                      {
+                        "yAxis": "left",
+                        "period": 300
+                      }
+                    ],
+                    [
+                      ".",
+                      "SucceedProcessing.Records",
+                      ".",
+                      ".",
+                      {
+                        "stat": "Sum",
+                        "yAxis": "right",
+                        "period": 300,
+                        "color": "#2ca02c"
+                      }
+                    ],
+                    [
+                      ".",
+                      "IncomingRecords",
+                      ".",
+                      ".",
+                      {
+                        "stat": "Sum",
+                        "yAxis": "right",
+                        "period": 300,
+                        "color": "#ff7f0e"
+                      }
+                    ]
+                  ],
+                  "region": "${AWS::Region}",
+                  "title": "Kinesis Firehose",
+                  "period": 300
+                }
+              },
+              {
+                "type": "metric",
+                "x": 0,
+                "y": 12,
+                "width": 24,
+                "height": 6,
+                "properties": {
+                  "view": "timeSeries",
+                  "stacked": true,
+                  "metrics": [
+                    [
+                      "AWS/DynamoDB",
+                      "ConsumedReadCapacityUnits",
+                      "TableName",
+                      "DeviceDetails",
+                      {
+                        "period": 60,
+                        "stat": "Sum"
+                      }
+                    ],
+                    [
+                      ".",
+                      "ReadThrottleEvents",
+                      ".",
+                      ".",
+                      {
+                        "period": 60,
+                        "yAxis": "right",
+                        "stat": "Sum"
+                      }
+                    ]
+                  ],
+                  "region": "${AWS::Region}",
+                  "title": "DynamoDB",
+                  "period": 300,
+                  "annotations": {
+                    "horizontal": [
+                      {
+                        "label": "ProvisionedReadCapacityUnits",
+                        "value": 3000
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+
+  # Module 3 --------------------------------------------------------------------------------------
+
+  # Kinesis Analytics Application
+  AnalyzeDeviceDataApp:
+    Type: "AWS::KinesisAnalyticsV2::Application"
+    Properties:
+      ApplicationName: DeviceDataAnalytics
+      ApplicationDescription: DeviceDataAnalytics
+      RuntimeEnvironment: SQL-1_0
+      ServiceExecutionRole: !GetAtt KinesisAnalyticsRole.Arn
+      ApplicationConfiguration:
+        ApplicationCodeConfiguration:
+          CodeContentType: PLAINTEXT
+          CodeContent:
+            S3ContentLocation: 
+              BucketARN: !Join ["",["arn:aws:s3:::",!FindInMap [Variables,LambdaBucket,Name]]]
+              FileKey: anomalies.sql
+        SqlApplicationConfiguration:
+          Inputs:
+            - NamePrefix: SOURCE_STREAM
+              InputSchema:
+                RecordColumns:
+                  - Name: device_id
+                    SqlType: VARCHAR(16)
+                    Mapping: $.device_id
+                  - Name: patient_id
+                    SqlType: VARCHAR(16)
+                    Mapping: $.patient_id
+                  - Name: temperature
+                    SqlType: INTEGER
+                    Mapping: $.temperature
+                  - Name: pulse
+                    SqlType: INTEGER
+                    Mapping: $.pulse
+                  - Name: oxygen_percent
+                    SqlType: INTEGER
+                    Mapping: $.oxygen_percent
+                  - Name: systolic
+                    SqlType: INTEGER
+                    Mapping: $.systolic
+                  - Name: diastolic
+                    SqlType: INTEGER
+                    Mapping: $.diastolic
+                  - Name: manufacturer
+                    SqlType: VARCHAR(16)
+                    Mapping: $.manufacturer
+                  - Name: model
+                    SqlType: VARCHAR(16)
+                    Mapping: $.model
+                RecordFormat:
+                  RecordFormatType: JSON
+                  MappingParameters:
+                    JSONMappingParameters:
+                      RecordRowPath: $
+              KinesisFirehoseInput:
+                ResourceARN: !GetAtt IngestStream.Arn
+
+  KinesisAnalyticsRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: KinesisAnalyticsAnomalyDetectRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: kinesisanalytics.amazonaws.com
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: Firehose_ReadWrite
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - firehose:DescribeDeliveryStream
+                  - firehose:Get*
+                  - firehose:PutRecord
+                  - firehose:PutRecordBatch
+                Resource:
+                  - !GetAtt IngestStream.Arn
+                  - !GetAtt OutputStream.Arn
+        - PolicyName: Lambda_Invoke
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                  - lambda:GetFunctionConfiguration
+                Resource: !GetAtt Alert.Arn
+
+  AnalyticsTOLambda:
+     Type: "AWS::KinesisAnalytics::ApplicationOutput"
+     DependsOn: AnalyzeDeviceDataApp
+     Properties:
+       ApplicationName: DeviceDataAnalytics
+       Output:
+         Name: lambdaAlert
+         DestinationSchema: 
+           RecordFormatType: JSON
+         LambdaOutput:
+           ResourceARN: !GetAtt Alert.Arn
+
+  AnalyticsTOFirehose:
+     Type: "AWS::KinesisAnalytics::ApplicationOutput"
+     DependsOn: AnalyzeDeviceDataApp
+     Properties:
+       ApplicationName: DeviceDataAnalytics
+       Output:
+         Name: firehoseS3
+         DestinationSchema: 
+           RecordFormatType: JSON
+         KinesisFirehoseOutput:
+           ResourceARN: !GetAtt OutputStream.Arn
+  
+  # Output Kinesis Firehose
+  OutputStream:
+    Type: AWS::KinesisFirehose::DeliveryStream
+    Properties:
+      DeliveryStreamName: OutputStream
+      DeliveryStreamType: DirectPut
+      ExtendedS3DestinationConfiguration:
+        RoleARN: !GetAtt OutputStreamRole.Arn
+        BucketARN: !GetAtt S3Bucket.Arn
+        Prefix: 'anomaly_scores/'
+        BufferingHints:
+          SizeInMBs: 100
+          IntervalInSeconds: 300
+        CompressionFormat: UNCOMPRESSED
+
+  OutputStreamRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - firehose.amazonaws.com
+          Action:
+          - sts:AssumeRole
+          Condition:
+            StringEquals:
+              sts:ExternalId: !Ref AWS::AccountId
+      Policies:
+        - PolicyName: S3_ReadWrite
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+              - s3:AbortMultipartUpload
+              - s3:GetBucketLocation
+              - s3:GetObject
+              - s3:ListBucket
+              - s3:ListBucketMultipartUploads
+              - s3:PutObject
+              Resource:
+                - !Sub "arn:aws:s3:::${S3Bucket}/*"
+                - !Sub "arn:aws:s3:::${S3Bucket}"
+
+  # Lambda function triggers an SNS notification if an anomaly score is above a certain threshold
+  Alert:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: Alert
+      Handler: Alert.lambda_handler
+      Runtime: python3.7
+      CodeUri: 
+        Bucket: !FindInMap [Variables,LambdaBucket,Name]
+        Key: Alert.zip
+      Description: Publishes to SNS Topic for a threshold anomaly score
+      MemorySize: 1536
+      Timeout: 300
+      Policies:
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+        - arn:aws:iam::aws:policy/AmazonSNSFullAccess
+      Environment:
+        Variables:
+          SNS_TOPIC_ARN: !Sub 'arn:aws:sns:${AWS::Region}:${AWS::AccountId}:devicemanufacturer'
+          ANOMALY_THRESHOLD: 0.98
+
+  # SNS topic for notifications
+  SNSNotificationTopic:
+    Type: "AWS::SNS::Topic"
+    Properties:
+      TopicName: devicemanufacturer
+      DisplayName: devicemanufacturer
+      Subscription:
+        - Endpoint: !Ref Email
+          Protocol: email
+
