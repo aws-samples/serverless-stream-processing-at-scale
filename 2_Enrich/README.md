@@ -12,14 +12,8 @@ The CloudFormation template that you ran during Set Up deployed the following:
 * An **S3 bucket** to store the enriched data from Kinesis.
 
 ### Ingest Data
-In order to allow these modules to be completed out of order, we have provided two options for proceeding:
+If you have **already completed Module 1**, data is already being ingested via the Lambda functon that is publishing to the IoT MQTT Topic, and **you can skip this section**.
 
-#### I've completed Module 1
-If you have already completed Module 1, data is already streaming in from the simulated data you published earlier.
-
-1. TODO
-
-#### I haven't completed Module 1
 If you haven't completed the first module, you will use **Kinesis Data Generator** to simulate incoming data coming into the **IngestStream** Kinesis Firehose.
 
 1. Go to the [Kinesis Data Generator Set Up page][kdg-help].
@@ -35,7 +29,7 @@ If you haven't completed the first module, you will use **Kinesis Data Generator
 	```
 	{
 		"timestamp": "{{date.now}}",
-		"device_id": "device{{helpers.replaceSymbolWithNumber("####")}}",
+		"device_id": "device0{{helpers.replaceSymbolWithNumber("###")}}",
 		"patient_id": "patient{{helpers.replaceSymbolWithNumber("####")}}",
 		"name": "{{name.lastName}}, {{name.firstName}}",
 		"dob": "{{random.number(12)}}/{{random.number(30)}}/{{random.number({"min":1920,"max":2000})}}",
@@ -58,10 +52,15 @@ To allow you to more easily monitor this section of the pipeline, we created a C
 
 1. You can also confirm that the pipeline is working by checking S3 for transformed records.
 
-1. Go to the **S3** console and TODO enriched/ de-identified/
+1. Go to the **S3** console, and click on the *yourinitials*-sensor-data bucket.
 
-### Summary
-TODO
+1. You should see two folders: **de-identified** and **enriched**. In each of these folders, you will see the de-identified data and the data enriched with device metadata respectively. These files were PUT here by Kinesis Firehose.
+
+	Kinesis Firehose batches incoming messages into files according to buffer size (MB) or time threshold (s), whichever is reached first. In this case, we chose to post a new batch file to S3 every 100 MB of data or every 300 seconds (5 minutes).
+
+	Kinesis Firehose also PUTs the data into S3 in the following datetime file structure: `year/month/day/hour/`, so you will need to click into several folders before reaching the data file(s).
+
+1. Once you reach a data file, you can download it to view the contents. You should see that the file has JSON data with the patient's **PHI/PII** (name, date of birth, temperature, oxygen percentage) **nulled out**. Additionally, in the **enriched data** folder, you will see the additional attributes: manufacturer, model.
 
 ### Next
 

@@ -9,10 +9,13 @@ The CloudFormation template that you ran during Set Up deployed the following:
 * TODO
 
 ### Instructions
-TODO
+1. Go to the **Kinesis** console.
 
-### Summary
-TODO
+1. Select **Data Analytics** on the left-hand side to view the **Device Data Analytics** Kinesis Data Analytics Application that was deployed in the CloudFormation template.
+
+1. Click on **Application details**.
+
+1. TODO
 
 ### Next
 

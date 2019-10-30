@@ -1,22 +1,25 @@
 import json
+import string
 import boto3
 import os
-from random import randint, uniform
+from random import randint, uniform, choice
 from datetime import datetime
   
 print('Loading function')
+
+iot = boto3.client('iot-data')
   
 def lambda_handler(event, context):
-	iot = boto3.client('iot-data')
-
-	# publish 10 messages at a time
-	for i in range(10):
+	# publish multiple messages at a time
+	for i in range(2000):
 		# simulate random data
+		lastname = choice(string.ascii_uppercase) + ''.join(choice(string.ascii_lowercase) for i in range(randint(5,15)))
+		firstname = choice(string.ascii_uppercase) + ''.join(choice(string.ascii_lowercase) for i in range(randint(4,8)))
 		data = {
 			'timestamp': datetime.now().strftime('%Y-%m-%dT%H:%M:%S'),
-			'device_id': 'device' + str(randint(1000,10000)),
-			'patient_id': 'patient' + str(randint(1000,10000)),
-			'name': ''.join(random.choice(string.lowercase) for x in range(20)).join(', ').''.join(random.choice(string.lowercase) for x in range(10)),
+			'device_id': 'device' + str(randint(0,5000)).zfill(4),
+			'patient_id': 'patient' + str(randint(0,5000)).zfill(4),
+			'name': lastname + ', ' + firstname,
 			'dob': str(randint(1,13)) + '/' + str(randint(1,30)) + '/' + str(randint(1920,2000)),
 			'temp': round(uniform(96,104),1),
 			'pulse': round(uniform(50,120),1),

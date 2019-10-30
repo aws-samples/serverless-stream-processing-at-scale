@@ -72,15 +72,7 @@ Before you start feeding simulated data into the pipeline, you can test the pipe
 
 1. You can go to the DynamoDB console and look at the **PatientReference** table (Services > DynamoDB > Tables > PatientReference > Items) to confirm that there is now an item indexed by PatientID and Timestamp with the PHI/PII data from the sensor data message.
 
-1. Note that the table is encrypted (using KMS), but since you have permissions to KMS, you can see the un-encrypted data in the console. TODO check that this is true
-
-1. You can also confirm that the de-identified data was transported successfully via Kinesis Firehose to S3 by visiting the S3 console and going to the **yourinitials-sensor-data** bucket (or whatever bucket name you chose while deploying the CloudFormation template during Set Up).
-
-1. Kinesis Firehose batches incoming messages into files according to buffer size (MB) or time threshold (s), whichever is reached first. In this case, we chose to post a new batch file to S3 every 100 MB of data or every 300 seconds (5 minutes).
-
-1. Kinesis Firehose also PUTs the data into S3 in the following datetime file structure: `year/month/day/hour/`, so you will need to click into several folders before reaching the data file(s).
-
-1. Once you reach a data file, you can download it to view the contents. You should see that the file has JSON data with the patient's PHI/PII (name, date of birth, device ID, temperture, and oxygen percentage) nulled out.
+1. Note that the table is encrypted using KMS, but you can see the un-encrypted data in the console since DynamoDB decrypts the data transparently. You can read more about encryption at rest in DynamoDB [here][dynamo-encryption].
 
 ### Simulate Sensor Data
 Now you will use a scheduled CloudWatch Event to trigger the **Publish** Lambda function and automatically send simulated sensor data into the pipeline you just walked through.
@@ -101,12 +93,10 @@ Now you will use a scheduled CloudWatch Event to trigger the **Publish** Lambda 
 
 1. You can confirm that you were successful by going back to the **Lambda** console and checking the **Invocations** graph under **Monitoring**. You will have to wait a couple minutes for data to start coming into the dashboard.
 
-### Summary
-TODO
-
 ### Next
 
 :white_check_mark: Continue to the second module: [Enrich Data][enrich].
 
+[dynamo-encryption]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/EncryptionAtRest.html
 [enrich]: ../2_Enrich/
 

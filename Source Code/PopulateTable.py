@@ -1,17 +1,15 @@
 import boto3
 import json
-import requests
 import os
 import random
 from botocore.vendored import requests
-import json
  
 print('Loading function')
 
 SUCCESS = "SUCCESS"
 FAILED = "FAILED"
 
-DEVICES = 10000
+DEVICES = 5000
 MANUFACTURERS = 20
 MODELS = 20
 
@@ -19,26 +17,39 @@ ddb = boto3.resource('dynamodb')
 table = ddb.Table(os.environ['TABLE_NAME'])
 
 def lambda_handler(event, context):
-    print(event)
-    reqtype = event['RequestType']
+    print("Recieved event: " + json.dumps(event))
 
-    if (reqtype == 'Create'):
-        populate()
+    result = SUCCESS
+    if event['RequestType'] == 'Create':
+        result = FAILED
+        try:
+            result = populate()
+        except Exception as e:
+            send(event,context,FAILED,{"error":str(e)})
 
-    # send cfn response to tell the cfn stack that this was successful
-    send(event,context,SUCCESS,{})
+    # send cfn response to tell the cfn stack that this completed
+    if result == FAILED:
+        send(event,context,FAILED,{})
+    else:
+        send(event,context,SUCCESS,{})
 
 def populate():
     for i in range(0, DEVICES):
         item = {
-                'device_id' : 'device{num:04d}'.format(num=i),
+                'device_id' : 'device' + str(i).zfill(4),
                 'manufacturer' : 'Manufacturer {num:02d}'.format(num = random.randrange(MANUFACTURERS)),
                 'model' : 'Model {num:02d}'.format(num = random.randrange(MODELS))
                 }
+        try:
+            response = table.put_item(Item = item)
+        except Exception as e:
+            print("error " + str(e))
+            return FAILED
 
-        if(i % 100 == 0):
-            print('Adding ' + json.dumps(item))
-        table.put_item(Item = item)
+        if (i % 100 == 0):
+            print('DynamoDB Put: ' + json.dumps(item))
+
+    return SUCCESS
  
 # cfn response
 def send(event, context, responseStatus, responseData, physicalResourceId=None, noEcho=False):

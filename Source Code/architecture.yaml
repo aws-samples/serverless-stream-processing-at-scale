@@ -48,7 +48,7 @@ Resources:
         Key: Publish.zip
       Description: Generates random life support device sensor data
       MemorySize: 1536
-      Timeout: 300
+      Timeout: 60
       Policies:
         - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
         - arn:aws:iam::aws:policy/AWSIoTFullAccess
@@ -77,7 +77,7 @@ Resources:
       Environment:
         Variables:
           TableName: PatientReference
-          DeliveryStream: SensorDataCollection
+          DeliveryStream: IngestStream
       Events:
        IoT:
          Type: IoTRule
@@ -196,7 +196,7 @@ Resources:
   FirehoseTransform:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: firehoseTransform.lambda_handler
+      Handler: FirehoseTransform.lambda_handler
       Runtime: python3.7
       CodeUri: 
         Bucket: !FindInMap [Variables,LambdaBucket,Name]
@@ -233,7 +233,7 @@ Resources:
           KeyType: HASH
       ProvisionedThroughput:
         ReadCapacityUnits: 50
-        WriteCapacityUnits: 5
+        WriteCapacityUnits: 50
 
   # Lambda function used to populate the DeviceDetails table with sample data
   PopulateTable:
@@ -247,7 +247,7 @@ Resources:
       FunctionName: PopulateTable
       Description: Populates DynamoDB table with sample device information
       MemorySize: 1536
-      Timeout: 300
+      Timeout: 900
       Policies:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
         - Version: '2012-10-17'
@@ -439,58 +439,81 @@ Resources:
 
   # Kinesis Analytics Application
   AnalyzeDeviceDataApp:
-    Type: "AWS::KinesisAnalyticsV2::Application"
+    Type: "AWS::KinesisAnalytics::Application"
     Properties:
       ApplicationName: DeviceDataAnalytics
       ApplicationDescription: DeviceDataAnalytics
-      RuntimeEnvironment: SQL-1_0
-      ServiceExecutionRole: !GetAtt KinesisAnalyticsRole.Arn
-      ApplicationConfiguration:
-        ApplicationCodeConfiguration:
-          CodeContentType: PLAINTEXT
-          CodeContent:
-            S3ContentLocation: 
-              BucketARN: !Join ["",["arn:aws:s3:::",!FindInMap [Variables,LambdaBucket,Name]]]
-              FileKey: anomalies.sql
-        SqlApplicationConfiguration:
-          Inputs:
-            - NamePrefix: SOURCE_STREAM
-              InputSchema:
-                RecordColumns:
-                  - Name: device_id
-                    SqlType: VARCHAR(16)
-                    Mapping: $.device_id
-                  - Name: patient_id
-                    SqlType: VARCHAR(16)
-                    Mapping: $.patient_id
-                  - Name: temperature
-                    SqlType: INTEGER
-                    Mapping: $.temperature
-                  - Name: pulse
-                    SqlType: INTEGER
-                    Mapping: $.pulse
-                  - Name: oxygen_percent
-                    SqlType: INTEGER
-                    Mapping: $.oxygen_percent
-                  - Name: systolic
-                    SqlType: INTEGER
-                    Mapping: $.systolic
-                  - Name: diastolic
-                    SqlType: INTEGER
-                    Mapping: $.diastolic
-                  - Name: manufacturer
-                    SqlType: VARCHAR(16)
-                    Mapping: $.manufacturer
-                  - Name: model
-                    SqlType: VARCHAR(16)
-                    Mapping: $.model
-                RecordFormat:
-                  RecordFormatType: JSON
-                  MappingParameters:
-                    JSONMappingParameters:
-                      RecordRowPath: $
-              KinesisFirehoseInput:
-                ResourceARN: !GetAtt IngestStream.Arn
+      ApplicationCode: !Sub |
+        CREATE OR REPLACE STREAM "DEST_STREAM_1"(
+            "device_id"         VARCHAR(16),
+            "manufacturer"      VARCHAR(16),
+            "model"             VARCHAR(8),
+            "pulse"             DOUBLE,
+            "systolic"          DOUBLE,
+            "diastolic"         DOUBLE,
+            "ANOMALY_SCORE"     DOUBLE);
+
+        CREATE OR REPLACE STREAM "DEST_STREAM_2"(
+            "device_id"         VARCHAR(16),
+            "manufacturer"      VARCHAR(16),
+            "model"             VARCHAR(8),
+            "pulse"             DOUBLE,
+            "systolic"          DOUBLE,
+            "diastolic"         DOUBLE,
+            "ANOMALY_SCORE"     DOUBLE);
+
+        CREATE OR REPLACE PUMP "OUTPUT_PUMP_1" AS 
+            INSERT INTO "DEST_STREAM_1"
+                SELECT STREAM
+                    "device_id",
+                    "manufacturer",
+                    "model",
+                    "pulse",
+                    "systolic",
+                    "diastolic",
+                    ANOMALY_SCORE 
+                FROM TABLE(RANDOM_CUT_FOREST(
+                    CURSOR(SELECT STREAM * FROM "SOURCE_SQL_STREAM_001")));
+
+        CREATE OR REPLACE PUMP "OUTPUT_PUMP_2" AS 
+            INSERT INTO "DEST_STREAM_2"
+            SELECT STREAM * FROM "DEST_STREAM_1";
+      Inputs:
+        - InputProcessingConfiguration:
+          ResourceARN: !GetAtt FirehoseTransform.Arn
+          RoleARN: !GetAtt KinesisAnalyticsRole.Arn
+        - NamePrefix: SOURCE_SQL_STREAM
+          InputSchema:
+            RecordColumns:
+              - Name: device_id
+                SqlType: VARCHAR(16)
+                Mapping: $.device_id
+              - Name: patient_id
+                SqlType: VARCHAR(16)
+                Mapping: $.patient_id
+              - Name: pulse
+                SqlType: DOUBLE
+                Mapping: $.pulse
+              - Name: systolic
+                SqlType: DOUBLE
+                Mapping: $.systolic
+              - Name: diastolic
+                SqlType: DOUBLE
+                Mapping: $.diastolic
+              - Name: manufacturer
+                SqlType: VARCHAR(16)
+                Mapping: $.manufacturer
+              - Name: model
+                SqlType: VARCHAR(8)
+                Mapping: $.model
+            RecordFormat:
+              RecordFormatType: JSON
+              MappingParameters:
+                JSONMappingParameters:
+                  RecordRowPath: $
+          KinesisFirehoseInput:
+            ResourceARN: !GetAtt IngestStream.Arn
+            RoleARN: !GetAtt KinesisAnalyticsRole.Arn
 
   KinesisAnalyticsRole:
     Type: "AWS::IAM::Role"
@@ -525,31 +548,35 @@ Resources:
                 Action:
                   - lambda:InvokeFunction
                   - lambda:GetFunctionConfiguration
-                Resource: !GetAtt Alert.Arn
+                Resource: 
+                  - !GetAtt Alert.Arn
+                  - !GetAtt FirehoseTransform.Arn
 
   AnalyticsTOLambda:
-     Type: "AWS::KinesisAnalytics::ApplicationOutput"
-     DependsOn: AnalyzeDeviceDataApp
-     Properties:
-       ApplicationName: DeviceDataAnalytics
-       Output:
-         Name: lambdaAlert
-         DestinationSchema: 
-           RecordFormatType: JSON
-         LambdaOutput:
-           ResourceARN: !GetAtt Alert.Arn
+    Type: "AWS::KinesisAnalytics::ApplicationOutput"
+    DependsOn: AnalyzeDeviceDataApp
+    Properties:
+      ApplicationName: DeviceDataAnalytics
+      Output:
+        Name: DEST_STREAM_1
+        DestinationSchema: 
+          RecordFormatType: JSON
+        LambdaOutput:
+          ResourceARN: !GetAtt Alert.Arn
+          RoleARN: !GetAtt KinesisAnalyticsRole.Arn
 
   AnalyticsTOFirehose:
-     Type: "AWS::KinesisAnalytics::ApplicationOutput"
-     DependsOn: AnalyzeDeviceDataApp
-     Properties:
-       ApplicationName: DeviceDataAnalytics
-       Output:
-         Name: firehoseS3
-         DestinationSchema: 
-           RecordFormatType: JSON
-         KinesisFirehoseOutput:
-           ResourceARN: !GetAtt OutputStream.Arn
+    Type: "AWS::KinesisAnalytics::ApplicationOutput"
+    DependsOn: AnalyzeDeviceDataApp
+    Properties:
+      ApplicationName: DeviceDataAnalytics
+      Output:
+        Name: DEST_STREAM_2
+        DestinationSchema: 
+          RecordFormatType: JSON
+        KinesisFirehoseOutput:
+          ResourceARN: !GetAtt OutputStream.Arn
+          RoleARN: !GetAtt KinesisAnalyticsRole.Arn
   
   # Output Kinesis Firehose
   OutputStream:
