@@ -16,8 +16,10 @@ However, CloudFormation won't delete any S3 buckets that have data in them, so f
 
 1. Click **Delete**.
 
+1. Note that Kinesis may continue to send data after you've emptied the S3 bucket. If that happens, you will see that the CloudFormation stack has the status **DELETE_FAILED**, and under **Events**, you will see the **Status Reason**: "The following resource(s) failed to delete: [S3Bucket]." 
+
+	If that happens, empty the S3 bucket again, and delete the stack once more.
+
 You will also need to manually clean up any resources you created outside of the workshop CloudFormation stack. 
 
 1. Go to the **CloudWatch** console and delete the CloudWatch Event you created to trigger the Publish Lambda function.
-
-1. If you used the **Kinesis Data Generator** in Module 2, also delete the **Kinesis-Date-Generator-Cognito-User** stack.

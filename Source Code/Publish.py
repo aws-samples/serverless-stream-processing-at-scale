@@ -22,7 +22,7 @@ def lambda_handler(event, context):
 			'name': lastname + ', ' + firstname,
 			'dob': str(randint(1,13)) + '/' + str(randint(1,30)) + '/' + str(randint(1920,2000)),
 			'temp': round(uniform(96,104),1),
-			'pulse': round(uniform(50,120),1),
+			'pulse': round(uniform(0,60),1) if (i%500 == 0) else round(uniform(60,120),1), # create an anomaly
 			'oxygen_percent': round(uniform(80,100),1),
 			'systolic': round(uniform(80,200),1),
 			'diastolic': round(uniform(40,120),1)

@@ -11,38 +11,6 @@ The CloudFormation template that you ran during Set Up deployed the following:
 * A **DeviceDetails** DynamoDB table with metadata.
 * An **S3 bucket** to store the enriched data from Kinesis.
 
-### Ingest Data
-If you have **already completed Module 1**, data is already being ingested via the Lambda functon that is publishing to the IoT MQTT Topic, and **you can skip this section**.
-
-If you haven't completed the first module, you will use **Kinesis Data Generator** to simulate incoming data coming into the **IngestStream** Kinesis Firehose.
-
-1. Go to the [Kinesis Data Generator Set Up page][kdg-help].
-
-1. Follow the instructions. Once you're done, log into [KDG][kdg] with the credentials you just created.
-
-1. Select **us-west-2** from the **Region** dropdown.
-
-1. Confirm that **IngestStream** is selected in the **Stream/delivery stream** dropdown.
-
-1. Under **Record template**, copy paste the following into the template box:
-
-	```
-	{
-		"timestamp": "{{date.now}}",
-		"device_id": "device0{{helpers.replaceSymbolWithNumber("###")}}",
-		"patient_id": "patient{{helpers.replaceSymbolWithNumber("####")}}",
-		"name": "{{name.lastName}}, {{name.firstName}}",
-		"dob": "{{random.number(12)}}/{{random.number(30)}}/{{random.number({"min":1920,"max":2000})}}",
-		"temp": {{random.number({"min":96,"max":104})}},
-		"pulse": {{random.number({"min":50,"max":120})}},
-		"oxygen_percent": {{random.number({"min":80,"max":100})}},
-		"systolic": {{random.number({"min":80,"max":200})}},
-		"diastolic": {{random.number({"min":40,"max":120})}}
-	}
-	```
-
-1. Click **Send data**. KDG is now sending simulated data to your Kinesis Firehose.
-
 ### Monitor the Pipeline
 To allow you to more easily monitor this section of the pipeline, we created a CloudWatch dashboard that displays Lambda invocations, Kinesis Firehose records, and DynamoDB table reads.
 

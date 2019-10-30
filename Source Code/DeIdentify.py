@@ -6,7 +6,6 @@ from decimal import Decimal
 print('Loading function')
 
 dynamodb = boto3.resource('dynamodb', region_name='us-west-2')
-table = dynamodb.Table(os.environ['TableName'])
 firehose = boto3.client('firehose')
   
 def lambda_handler(event, context):
@@ -15,6 +14,7 @@ def lambda_handler(event, context):
     print('Received event: ',iot_msg)
 
     # put PHI/PII into dynamo
+    table = dynamodb.Table(os.environ['TableName'])
     response = table.put_item(
         Item={
             'patient_id': event["patient_id"],

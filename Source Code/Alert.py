@@ -1,15 +1,40 @@
 import boto3
 import base64
+import os
+import json
+from base64 import b64decode, b64encode
 
 print('Loading function')
 
-client = boto3.client('sns')
+sns = boto3.client('sns')
 topic_arn = os.environ['SNS_TOPIC_ARN']
-threshold = os.environ['ANOMALY_THRESHOLD']
+upper_threshold = float(os.environ['UPPER_THRESHOLD'])
+lower_threshold = float(os.environ['LOWER_THRESHOLD'])
 
+ENCODING = 'utf-8'
 def lambda_handler(event, context):
+    output_records = []
     for record in event['records']:
-        data = record['data']
-        if data["ANOMALY_SCORE"] > threshold:
-            response = sns.publish(TopicArn=topic_arn, Message=base64.b64decode(data), Subject='Anomaly Score Above ' + str(threshold))
+        data = b64decode(record['data']).decode(ENCODING)
+        add_newline = data + "\n"
+        output_data = b64encode(add_newline.encode(ENCODING)).decode(ENCODING)
+        
+        output_records.append({
+            'recordId': record['recordId'],
+            'result': 'Ok',
+            'data': output_data
+        })
+        
+        data_json = json.loads(data)
+        print("Data: ",json.dumps(data_json))
+        anomaly_score = data_json['ANOMALY_SCORE']
+        
+        if anomaly_score > upper_threshold:
+            print("Anomaly Found!")
+            response = sns.publish(TopicArn=topic_arn, Message=data, Subject='Anomaly Score Above ' + str(upper_threshold))
             print('SNS Publish: ',json.dumps(response))
+        elif anomaly_score < lower_threshold:
+            print("Anomaly Found!")
+            response = sns.publish(TopicArn=topic_arn, Message=data, Subject='Anomaly Score Below ' + str(lower_threshold))
+            print('SNS Publish: ',json.dumps(response))
+    return {'records': output_records}

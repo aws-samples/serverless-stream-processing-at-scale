@@ -117,8 +117,8 @@ Resources:
         BucketARN: !GetAtt S3Bucket.Arn
         Prefix: enriched/
         BufferingHints:
-          SizeInMBs: 100
-          IntervalInSeconds: 300
+          SizeInMBs: 1
+          IntervalInSeconds: 60
         CompressionFormat: UNCOMPRESSED
         ProcessingConfiguration:
           Enabled: true
@@ -133,8 +133,8 @@ Resources:
           BucketARN: !GetAtt S3Bucket.Arn
           Prefix: de-identified/
           BufferingHints:
-            SizeInMBs: 100
-            IntervalInSeconds: 300
+            SizeInMBs: 1
+            IntervalInSeconds: 60
           CompressionFormat: UNCOMPRESSED
         CloudWatchLoggingOptions:
           Enabled: true
@@ -444,7 +444,7 @@ Resources:
       ApplicationName: DeviceDataAnalytics
       ApplicationDescription: DeviceDataAnalytics
       ApplicationCode: !Sub |
-        CREATE OR REPLACE STREAM "DEST_STREAM_1"(
+        CREATE OR REPLACE STREAM "DEST_STREAM"(
             "device_id"         VARCHAR(16),
             "manufacturer"      VARCHAR(16),
             "model"             VARCHAR(8),
@@ -453,17 +453,8 @@ Resources:
             "diastolic"         DOUBLE,
             "ANOMALY_SCORE"     DOUBLE);
 
-        CREATE OR REPLACE STREAM "DEST_STREAM_2"(
-            "device_id"         VARCHAR(16),
-            "manufacturer"      VARCHAR(16),
-            "model"             VARCHAR(8),
-            "pulse"             DOUBLE,
-            "systolic"          DOUBLE,
-            "diastolic"         DOUBLE,
-            "ANOMALY_SCORE"     DOUBLE);
-
-        CREATE OR REPLACE PUMP "OUTPUT_PUMP_1" AS 
-            INSERT INTO "DEST_STREAM_1"
+        CREATE OR REPLACE PUMP "OUTPUT_PUMP" AS 
+            INSERT INTO "DEST_STREAM"
                 SELECT STREAM
                     "device_id",
                     "manufacturer",
@@ -474,14 +465,7 @@ Resources:
                     ANOMALY_SCORE 
                 FROM TABLE(RANDOM_CUT_FOREST(
                     CURSOR(SELECT STREAM * FROM "SOURCE_SQL_STREAM_001")));
-
-        CREATE OR REPLACE PUMP "OUTPUT_PUMP_2" AS 
-            INSERT INTO "DEST_STREAM_2"
-            SELECT STREAM * FROM "DEST_STREAM_1";
       Inputs:
-        - InputProcessingConfiguration:
-          ResourceARN: !GetAtt FirehoseTransform.Arn
-          RoleARN: !GetAtt KinesisAnalyticsRole.Arn
         - NamePrefix: SOURCE_SQL_STREAM
           InputSchema:
             RecordColumns:
@@ -514,7 +498,10 @@ Resources:
           KinesisFirehoseInput:
             ResourceARN: !GetAtt IngestStream.Arn
             RoleARN: !GetAtt KinesisAnalyticsRole.Arn
-
+          InputProcessingConfiguration:
+            InputLambdaProcessor:
+              ResourceARN: !GetAtt FirehoseTransform.Arn
+              RoleARN: !GetAtt KinesisAnalyticsRole.Arn
   KinesisAnalyticsRole:
     Type: "AWS::IAM::Role"
     Properties:
@@ -552,32 +539,19 @@ Resources:
                   - !GetAtt Alert.Arn
                   - !GetAtt FirehoseTransform.Arn
 
-  AnalyticsTOLambda:
-    Type: "AWS::KinesisAnalytics::ApplicationOutput"
-    DependsOn: AnalyzeDeviceDataApp
-    Properties:
-      ApplicationName: DeviceDataAnalytics
-      Output:
-        Name: DEST_STREAM_1
-        DestinationSchema: 
-          RecordFormatType: JSON
-        LambdaOutput:
-          ResourceARN: !GetAtt Alert.Arn
-          RoleARN: !GetAtt KinesisAnalyticsRole.Arn
-
   AnalyticsTOFirehose:
     Type: "AWS::KinesisAnalytics::ApplicationOutput"
     DependsOn: AnalyzeDeviceDataApp
     Properties:
       ApplicationName: DeviceDataAnalytics
       Output:
-        Name: DEST_STREAM_2
+        Name: DEST_STREAM
         DestinationSchema: 
           RecordFormatType: JSON
         KinesisFirehoseOutput:
           ResourceARN: !GetAtt OutputStream.Arn
           RoleARN: !GetAtt KinesisAnalyticsRole.Arn
-  
+
   # Output Kinesis Firehose
   OutputStream:
     Type: AWS::KinesisFirehose::DeliveryStream
@@ -589,9 +563,20 @@ Resources:
         BucketARN: !GetAtt S3Bucket.Arn
         Prefix: 'anomaly_scores/'
         BufferingHints:
-          SizeInMBs: 100
-          IntervalInSeconds: 300
+          SizeInMBs: 10
+          IntervalInSeconds: 120
         CompressionFormat: UNCOMPRESSED
+        ProcessingConfiguration:
+          Enabled: true
+          Processors:
+            - Type: Lambda
+              Parameters:
+                - ParameterName: LambdaArn
+                  ParameterValue: !GetAtt Alert.Arn
+        CloudWatchLoggingOptions:
+          Enabled: true
+          LogGroupName: '/aws/kinesisfirehose/OutputStream'
+          LogStreamName: S3Delivery
 
   OutputStreamRole:
     Type: AWS::IAM::Role
@@ -623,6 +608,16 @@ Resources:
               Resource:
                 - !Sub "arn:aws:s3:::${S3Bucket}/*"
                 - !Sub "arn:aws:s3:::${S3Bucket}"
+        - PolicyName: Lambda_Invoke
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+              - lambda:InvokeFunction
+              - lambda:GetFunctionConfiguration
+              Resource:
+              - !GetAtt Alert.Arn
 
   # Lambda function triggers an SNS notification if an anomaly score is above a certain threshold
   Alert:
@@ -643,7 +638,8 @@ Resources:
       Environment:
         Variables:
           SNS_TOPIC_ARN: !Sub 'arn:aws:sns:${AWS::Region}:${AWS::AccountId}:devicemanufacturer'
-          ANOMALY_THRESHOLD: 0.98
+          UPPER_THRESHOLD: 1.35
+          LOWER_THRESHOLD: 0.32
 
   # SNS topic for notifications
   SNSNotificationTopic:
