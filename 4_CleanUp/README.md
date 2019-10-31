@@ -6,7 +6,7 @@ However, CloudFormation won't delete any S3 buckets that have data in them, so f
 
 1. Go to the **S3** Console.
 
-1. Click on the checkbox next to your *yourinitials*-sensor-data bucket. 
+1. Click on the checkbox next to the **sensor-data-XXXXXXXX** bucket. 
 
 1. Click **Empty**.
 
@@ -22,4 +22,4 @@ However, CloudFormation won't delete any S3 buckets that have data in them, so f
 
 You will also need to manually clean up any resources you created outside of the workshop CloudFormation stack. 
 
-1. Go to the **CloudWatch** console and delete the CloudWatch Event you created to trigger the Publish Lambda function.
+1. Go to the **CloudWatch** console under **Rules**, and delete the CloudWatch Event **publish-sensor-data-every-min**.

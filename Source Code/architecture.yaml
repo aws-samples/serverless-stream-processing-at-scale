@@ -15,23 +15,25 @@ Mappings:
     LambdaBucket: 
       Name: serverless-stream-processing
 
-Parameters:
-  SensorDataBucketName:
-    Description: Sensor Data S3 Bucket Name
-    Default: yourinitials-sensor-data
-    Type: String
-  Email:
-    Description: Email to Recieve Alerts
-    Default: your-email@mail.com
-    Type: String
-
 Resources:
 
+  # S3 bucket sensor-data-XXXXXXXX (suffix taken from StackId)
   S3Bucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Delete
     Properties:
-      BucketName: !Ref SensorDataBucketName
+      BucketName: !Join
+      - "-"
+      - - "sensor-data"
+        - !Select
+          - 0
+          - !Split
+            - "-"
+            - !Select
+              - 2
+              - !Split
+                - "/"
+                - !Ref AWS::StackId
       AccessControl: Private
 
   # Module 1 --------------------------------------------------------------------------------------
@@ -54,7 +56,7 @@ Resources:
         - arn:aws:iam::aws:policy/AWSIoTFullAccess
       Environment:
         Variables:
-          IoTTopic: LifeSupportDevice/Sensor
+          IoTTopic: LifeSupportDevice/
 
   # Lambda function that puts PHI/PII data in dynamo, de-identified data in Firehose
   DeIdentify:
@@ -82,8 +84,7 @@ Resources:
        IoT:
          Type: IoTRule
          Properties:
-            AwsIotSqlVersion: "2016-03-23"
-            Sql: "SELECT * FROM 'LifeSupportDevice/Sensor'"
+            Sql: "SELECT * FROM 'LifeSupportDevice/#'"
 
   # DynamoDB to store encrypted PHI/PII data
   PatientReference:
@@ -647,7 +648,4 @@ Resources:
     Properties:
       TopicName: devicemanufacturer
       DisplayName: devicemanufacturer
-      Subscription:
-        - Endpoint: !Ref Email
-          Protocol: email
 

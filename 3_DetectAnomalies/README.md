@@ -2,16 +2,31 @@
 
 In this module, you'll see how you can use **Kinesis Analytics** to analyze streaming data in near real-time as it is ingested. In this case, the Random Cut Forest algorithm is used to generate anomaly scores. You'll be sent an email whenever an anomaly in the streaming data is found.
 
-### What was created
+### What was Created
 
 The CloudFormation template that you ran during Set Up deployed the following:
 
 * A **Device Data Analytics** Kinesis Analytics Application, taking **IngestStream** data as an input, and calculating anomaly_scores.
-* A **OutputStream** Kinesis Firehose which takes the **Device Data Analytics** data and puts it into S3 Sensor Data bucket.
+* A **OutputStream** Kinesis Firehose which takes the **Device Data Analytics** data and puts it into the S3 **sensor-data-XXXXXXXX** bucket.
 * A **Alert** Lambda function triggered from **OutputStream**, which sends an SNS notification whenever an anomaly_score above/below the threshold is found.
 * A **device manufacturer** SNS Topic for email notifications
 
-### Instructions
+### Sign up for Notifications
+
+1. Go to the **SNS** console.
+
+1. Under **Topics**, click on the **devicemanufacturer** topic.
+
+1. Click **Create subscription**, select the **Email** protocol, and type in an email that you can access.
+
+1. Click **Create subscription**.
+
+1. You will get an email at the address you provided. It will be titled **AWS Notification - Subscription Confirmation** from **devicemanufacturer**. Click **Confirm subscription** when you get the email. If you don't receive it within a few minutes, check your spam folder.
+	
+	![email-confirmation](Screenshots/subscription-confirmation.png)
+
+### Monitor the Pipeline
+
 1. Go to the **Kinesis** console.
 
 1. Select **Data Analytics** on the left-hand side.
@@ -32,7 +47,7 @@ The CloudFormation template that you ran during Set Up deployed the following:
 
 1. Click on the **Real-time Analytics** tab.
 
-1. In either **DEST_STREAM**, you should see data rows including an **ANOMALY_SCORE** that was calculated using the Random Cut Forest algorithm.
+1. In either **DEST_STREAM**, you should see data rows including an **ANOMALY_SCORE** that was calculated using the Random Cut Forest algorithm. You can read more about this anomaly detection method [here][random-cut].
 
 1. You can confirm that there is now an **anomaly_scores** folder in the S3 bucket with the same data you see in the **DEST_STREAMs**.
 
@@ -42,8 +57,11 @@ The CloudFormation template that you ran during Set Up deployed the following:
 
 1. You should notice that the **pulse** in the email alerts sent to you are very low (below 60). This is the anomaly that was simulated that Kinesis Analytics has picked up on!
 
+1. Once you're done, you can stop the application in order to stop recieving email alerts. You can do this from the Kinesis Analytics Console. From the Actions dropdown, select **Stop application**. You may recieve some emails for a minute or so after you've stopped the application.
+
 ### Next
 
 :white_check_mark: [Clean Up][cleanup].
 
+[random-cut]: https://docs.aws.amazon.com/kinesisanalytics/latest/sqlref/sqlrf-random-cut-forest.html
 [cleanup]: ../4_CleanUp/

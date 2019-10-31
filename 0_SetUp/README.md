@@ -12,6 +12,7 @@ In order to complete this workshop, you'll need an AWS account and permissions t
 * Kinesis Firehose, Streams, and Analytics
 * Simple Notification Service (SNS)
 * CloudWatch
+* Identity and Access Management (IAM)
 
 The code and instructions in this workshop assume only one participant is using
 a given AWS account at a time. If you attempt sharing an account with another
@@ -24,9 +25,9 @@ Use a personal account or create a new AWS account for this workshop rather than
 using an organization's account to ensure you have full access to the necessary
 services and to ensure you do not leave behind any resources from the workshop.
 
-### CloudFormation
+### Deploy CloudFormation
 
-[AWS CloudFormation][cloudformation] allows you to model your entire infrastructure with a JSON or YAML template. For this workshop, you will be deploying the architecture for all three modules with CloudFormation, and then you will walk through a streaming pattern in each module.
+[AWS CloudFormation][cloudformation] allows you to deploy infrastructure by defining an architecture in a JSON or YAML template. For this workshop, you will be deploying the architecture for all three modules with one CloudFormation template, and then you will walk through a streaming pattern in each module.
 
 1. Go to the AWS Management Console and type **CloudFormation** in the **Find Services** search bar. Click enter to go to the CloudFormation console.
 
@@ -38,27 +39,22 @@ services and to ensure you do not leave behind any resources from the workshop.
 
 1. Click **Next**.
 
-1. Type in a **Stack name** - something like **Streaming-Workshop**.
-
-1. Under **Parameters**, type in an **Email** that you have access to, and a unique **S3 Bucket Name**. 
-
-	*Note that S3 Bucket names are globaly unique, so if you have the same initials as another participant, you may want to use your full name to ensure your bucket name is unique.*
+1. Type in a unique **Stack name**, like **Streaming-Workshop**.
 
 1. Click **Next** twice, until you get to the **Review** page.
 
 1. Scroll to the bottom and check all three acknowledgement boxes.
 
+	The first two acknowledgements are there because the template will deploy IAM policies for the services in this architecture to access relevant services. The third acknowledgement is because the template uses the [AWS::Serverless Transform][CFN SAM] to define Lambda functions.
+
 1. Click **Create stack**.
 
-1. You will get an email at the address you provided. It will be titled **AWS Notification - Subscription Confirmation** from **devicemanufacturer**. Click **Confirm subscription** when you get the email. If you don't receive it within a few minutes, check your spam folder.
-
-1. The stack will take a few minutes to deploy. In the meantime, you can review the architecture diagram or start reading the instructions for the first module. 
-
-1. You can begin the first module when the stack status is **CREATE_COMPLETE**.
+1. The stack will take a few minutes to deploy. Wait until the stack status is **CREATE_COMPLETE** before starting the first module.
 
 ### Next
 
 :white_check_mark: Continue to the first module: [Collect & De-Identify Data][collect-deidentify].
 
 [cloudformation]: https://aws.amazon.com/cloudformation/
+[CFN SAM]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/transform-aws-serverless.html
 [collect-deidentify]: ../1_CollectDeIdentify/

@@ -33,7 +33,7 @@ def lambda_handler(event, context):
 
 		# publish to topic
 		response = iot.publish(
-		    topic=os.environ['IoTTopic'],
+		    topic=os.environ['IoTTopic'] + 'Hospital' + str(randint(0,50)).zfill(2) + '/',
 		    qos=0,
 		    payload=text.encode()
 		)
