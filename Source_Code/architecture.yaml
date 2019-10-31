@@ -47,7 +47,7 @@ Resources:
       Runtime: python3.7
       CodeUri:
         Bucket: !FindInMap [Variables,LambdaBucket,Name]
-        Key: Source+Code/Publish.zip
+        Key: Source_Code/Publish.zip
       Description: Generates random life support device sensor data
       MemorySize: 1536
       Timeout: 60
@@ -67,7 +67,7 @@ Resources:
       Runtime: python3.7
       CodeUri:
         Bucket: !FindInMap [Variables,LambdaBucket,Name]
-        Key: Source+Code/DeIdentify.zip
+        Key: Source_Code/DeIdentify.zip
       Description: Removes PHI/PII from message, inserts it into DynamoDB, and puts modified message into Kinesis Firehose
       MemorySize: 1536
       Timeout: 300
@@ -201,7 +201,7 @@ Resources:
       Runtime: python3.7
       CodeUri: 
         Bucket: !FindInMap [Variables,LambdaBucket,Name]
-        Key: Source+Code/FirehoseTransform.zip
+        Key: Source_Code/FirehoseTransform.zip
       FunctionName: FirehoseTransform
       Description: Transforms and enriches messages ingested by a Firehose delivery stream
       MemorySize: 1536
@@ -244,7 +244,7 @@ Resources:
       Runtime: python3.7
       CodeUri: 
         Bucket: !FindInMap [Variables,LambdaBucket,Name]
-        Key: Source+Code/PopulateTable.zip
+        Key: Source_Code/PopulateTable.zip
       FunctionName: PopulateTable
       Description: Populates DynamoDB table with sample device information
       MemorySize: 1536
@@ -629,7 +629,7 @@ Resources:
       Runtime: python3.7
       CodeUri: 
         Bucket: !FindInMap [Variables,LambdaBucket,Name]
-        Key: Source+Code/Alert.zip
+        Key: Source_Code/Alert.zip
       Description: Publishes to SNS Topic for a threshold anomaly score
       MemorySize: 1536
       Timeout: 300
