@@ -21,7 +21,7 @@ Note the *#* wildcard at the end of the topic name. Since this company deploys m
 
 1. Navigate to the **Test** tab in the left panel.
 
-1. Type **LifeSupportDevice/#** into the **Subscription topic** text box.
+1. Type **LifeSupportDevice/#** into the **Subscription topic** text box and click **Subscribe to topic**
 
 	![IoT Test Console](Screenshots/iot-test.png)
 	
@@ -42,10 +42,10 @@ Note the *#* wildcard at the end of the topic name. Since this company deploys m
 	  "diastolic": 75.6
 	}
 	```
-	
+		
+1. You will need to **replace the # wildcard** with a value like **Hospital15** in order to Publish.
+
 	![IoT Publish Console](Screenshots/iot-publish.png)
-	
-1. You will need to **replace the # wildcard** with a value like **Hospital14** in order to Publish.
 
 1. Click **Publish to Topic**. You should immediately see the same message pop up in the window below the code box.
 
@@ -61,19 +61,23 @@ Note the *#* wildcard at the end of the topic name. Since this company deploys m
 
 1. Click on the **DeIdentify** Lambda function.
 
-1. Under the **Monitoring** tab, you can see some quick stats on invocation and errors, etc.
+1. Under the **Monitoring** tab, you can see some quick stats on invocation and errors, etc. Since you only sent one message so far, you should only see one dot in each of these graphs.
+
+	![DeIdentify Monitoring Tab](Screenshots/deidentify-monitoring.png)
 
 1. You can see some more detail about invocations by clicking on **View logs in CloudWatch**.
 
 1. Click on the latest (closest to the top) **Log Stream**.
 
-1. You should see something like this for each invocation of the **DeIdentify** function:
+1. You should see something like this:
 
 	![CloudWatch Logs](Screenshots/deidentify-cloudwatch-logs.png)
 
 1. From these logs, you can see that something was put into a **DynamoDB** table, a **de-identified message** with PII/PHI data removed was created, and then was put into a **Kinesis Firehose**. 
 
 1. You can go to the DynamoDB console and look at the **PatientReference** table (Services > DynamoDB > Tables > PatientReference > Items) to confirm that there is now an item indexed by patient_id and timestamp with the PHI/PII data from the sensor data message.
+
+	![PatientReference Table](Screenshots/patientref-table.png)
 
 1. Note that the table is encrypted using KMS, but you can see the un-encrypted data in the console since DynamoDB decrypts the data transparently. You can read more about encryption at rest in DynamoDB [here][dynamo-encryption].
 

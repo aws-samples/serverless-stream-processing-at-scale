@@ -10,6 +10,8 @@ However, CloudFormation won't delete any S3 buckets that have data in them, so f
 
 1. Click **Empty**.
 
+	![Empty S3 Bucket](Screenshots/empty-bucket.png)
+
 1. Go to the **CloudFormation** Console.
 
 1. Click on the stack you created during set up.

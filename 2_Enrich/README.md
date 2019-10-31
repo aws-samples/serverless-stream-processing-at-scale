@@ -18,7 +18,9 @@ To allow you to more easily monitor this section of the pipeline, a CloudWatch d
 
 1. You may have to wait a few minutes depending on when you started publishing data in the previous module, but soon you'll see points starting to show up in the dashboard. 
 
-1. In this dashboard, you can see how fast data is coming in, and you can keep an eye out for any errors or throttling events. 
+1. In this dashboard, you can see how fast data is coming in, and you can keep an eye out for any errors or throttling events. Here is an example from a pipeline that has been running for a few hours:
+
+	![Dashboard](Screenshots/dashboard.png)
 
 1. You can also confirm that the pipeline is working by checking S3 for transformed records.
 
@@ -30,7 +32,15 @@ To allow you to more easily monitor this section of the pipeline, a CloudWatch d
 
 	Kinesis Firehose also PUTs the data into S3 in the following datetime file structure: `year/month/day/hour/`, so you will need to click into several folders before reaching the data file(s).
 
-1. Once you reach a data file, you can download it to view the contents. You should see that the file has JSON data with the patient's **PHI/PII** (name, date of birth, temperature, oxygen percentage) **nulled out**. Additionally, in the **enriched data** folder, you will see the additional attributes: manufacturer, model.
+1. Once you reach a data file, you can download it to view the contents. 
+
+	![S3 Contents](Screenshots/s3-content.png)
+
+1. You should see that the file has JSON data with the patient's **PHI/PII** (name, date of birth, temperature, oxygen percentage) **nulled out**. Additionally, in the **enriched data** folder, you will see the additional attributes: manufacturer, model.
+
+	Here is an example from an **enriched** file:
+
+	![Enriched File](Screenshots/enriched.png)
 
 ### Next
 
