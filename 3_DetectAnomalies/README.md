@@ -57,7 +57,7 @@ The CloudFormation template that you ran during Set Up deployed the following:
 
 1. In the **DEST_STREAM**, you should see data rows including an **ANOMALY_SCORE** that was calculated using the Random Cut Forest algorithm.
 
-1. You can confirm that there is now an **anomaly_scores** folder in the **sensor-data-XXXXXXXX** S3 bucket with the same data you see in the **DEST_STREAMs**.
+1. You can confirm that there is now an **anomaly_scores** folder in the **sensor-data-XXXXXXXX** S3 bucket with the same data you see in the **DEST_STREAM**.
 
 1. If an anomaly score is returned above the threshold, you will be emailed at the email you provided during set up.
 
