@@ -28,25 +28,24 @@ def lambda_handler(event, context):
 
         anomaly_found = False
 
-        if anomaly_score != 0.0: # score of 0 means algo is still training
-            if anomaly_score > upper_threshold:
-                anomaly_found = True
-                response = sns.publish(TopicArn=topic_arn, Message=data, Subject='Anomaly Score Above ' + str(upper_threshold))
-                print('SNS Publish: ',json.dumps(response))
-            elif anomaly_score < lower_threshold:
-                anomaly_found = True
-                response = sns.publish(TopicArn=topic_arn, Message=data, Subject='Anomaly Score Below ' + str(lower_threshold))
-                print('SNS Publish: ',json.dumps(response))
+        if anomaly_score > upper_threshold:
+            anomaly_found = True
+            response = sns.publish(TopicArn=topic_arn, Message=data, Subject='Anomaly Score Above ' + str(upper_threshold))
+            print('SNS Publish: ',json.dumps(response))
+        elif anomaly_score != 0.0 and anomaly_score < lower_threshold: # score of 0 means algo is still training
+            anomaly_found = True
+            response = sns.publish(TopicArn=topic_arn, Message=data, Subject='Anomaly Score Below ' + str(lower_threshold))
+            print('SNS Publish: ',json.dumps(response))
 
-            data_json['anomaly'] = anomaly_found
+        data_json['anomaly'] = anomaly_found
 
-            add_newline = json.dumps(data_json) + "\n"
-            output = b64encode(add_newline.encode(ENCODING)).decode(ENCODING)
+        add_newline = json.dumps(data_json) + "\n"
+        output = b64encode(add_newline.encode(ENCODING)).decode(ENCODING)
 
-            output_records.append({
-                'recordId': record['recordId'],
-                'result': 'Ok',
-                'data': output
-            })
+        output_records.append({
+            'recordId': record['recordId'],
+            'result': 'Ok',
+            'data': output
+        })
 
     return {'records': output_records}

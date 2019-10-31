@@ -17,7 +17,7 @@ def lambda_handler(event, context):
 		firstname = choice(string.ascii_uppercase) + ''.join(choice(string.ascii_lowercase) for i in range(randint(4,8)))
 		data = {
 			'timestamp': datetime.now().strftime('%Y-%m-%dT%H:%M:%S'),
-			'device_id': 'device' + str(randint(0,5000)).zfill(4),
+			'device_id': 'device' + str(randint(0,4500)).zfill(4),
 			'patient_id': 'patient' + str(randint(0,5000)).zfill(4),
 			'name': lastname + ', ' + firstname,
 			'dob': str(randint(1,13)) + '/' + str(randint(1,30)) + '/' + str(randint(1920,2000)),
