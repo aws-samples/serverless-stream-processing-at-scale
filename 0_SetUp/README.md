@@ -34,7 +34,7 @@ services and to ensure you do not leave behind any resources from the workshop.
    
 1. Click **Create Stack**.
 
-1. Under **Specify template**, insert this **Amazon S3 URL**: `https://serverless-stream-processing.s3-us-west-2.amazonaws.com/architecture.yaml`
+1. Under **Specify template**, insert this **Amazon S3 URL**: `https://serverless-stream-processing.s3-us-west-2.amazonaws.com/Source+Code/architecture.yaml`
 
 1. Click **Next**.
 
