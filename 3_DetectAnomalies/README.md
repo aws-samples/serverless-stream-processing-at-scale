@@ -40,7 +40,7 @@ The CloudFormation template that you ran during Set Up deployed the following:
 
 1. The threshold was determined by collecting anomaly_scores from a sample data set and finding the mean anomaly_score. The chosen threshold is three standard deviations above/below the mean.
 
-1. You should notice that the **pulse** in the email alerts sent to you tend to be low (below 60). This is because the simulated data coming in usually reports pulse in the range of 60-120 but occassionally sends a pulse below 60. This is an anomaly that Kinesis Analytics has picked up on!
+1. You should notice that the **pulse** in the email alerts sent to you are very low (below 60). This is the anomaly that was simulated that Kinesis Analytics has picked up on!
 
 ### Next
 

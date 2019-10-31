@@ -638,8 +638,8 @@ Resources:
       Environment:
         Variables:
           SNS_TOPIC_ARN: !Sub 'arn:aws:sns:${AWS::Region}:${AWS::AccountId}:devicemanufacturer'
-          UPPER_THRESHOLD: 1.35
-          LOWER_THRESHOLD: 0.32
+          UPPER_THRESHOLD: 1.5
+          LOWER_THRESHOLD: 0.4
 
   # SNS topic for notifications
   SNSNotificationTopic:
