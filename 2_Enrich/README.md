@@ -32,6 +32,8 @@ To allow you to more easily monitor this section of the pipeline, a CloudWatch d
 
 	Kinesis Firehose also PUTs the data into S3 in the following datetime file structure: `year/month/day/hour/`, so you will need to click into several folders before reaching the data file(s).
 
+	You may see a **processing-failed** folder in the **enriched** folder. These are records where the device-id in the message didn't match with any device-id records in the DeviceDetails DynamoDB table.
+
 1. Once you reach a data file, you can download it to view the contents. 
 
 	![S3 Contents](Screenshots/s3-content.png)
