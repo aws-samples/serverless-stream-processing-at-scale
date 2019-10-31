@@ -41,7 +41,7 @@ The CloudFormation template that you ran during Set Up deployed the following:
 
 1. Under **Streaming data**, you can see that this application is taking data in from **IngestStream** and applying the **FirehoseTransform** Lambda function to enrich the data with manufacturer and model information.
 
-1. Under **Destination**, you can see that the results are being sent to **Output Stream** to be sent to S3, as well as being sent to the **Alert** Lambda function so that anomaly scores above the threshold will trigger an SNS Email notification.
+1. Under **Destination**, you can see that the results are being sent to **Output Stream**. 
 
 1. Click on **Go to SQL results** to see what's happening in real-time.
 
@@ -51,7 +51,7 @@ The CloudFormation template that you ran during Set Up deployed the following:
 
 1. Under the **Source** tab, you can see incoming records from **IngestStream**. 
 
-	If you see the message **No rows in source stream**, this means that there aren't any incoming records at that moment. That may happen due to Kinesis Firehose buffering data, or since the Publish Lambda function only runs every minute. Wait a few seconds and try again by clicking **Retrieve rows**.
+	If you see the message **No rows in source stream**, this means that there aren't any incoming records at that moment. That may happen due to Kinesis Firehose buffering data, or since the Publish Lambda function only runs once a minute. Wait a few seconds and try again by clicking **Retrieve rows**.
 
 1. Click on the **Real-time Analytics** tab.
 
@@ -67,7 +67,9 @@ The CloudFormation template that you ran during Set Up deployed the following:
 
 	![Anomaly Email](Screenshots/anomaly-email.png)
 
-1. Once you're done, you can stop the application in order to stop recieving email alerts. You can do this from the Kinesis Analytics Console. From the Actions dropdown, select **Stop application**. You may recieve some emails for a minute or so after you've stopped the application.
+1. Once you're done, you can stop the application in order to stop recieving email alerts. 
+
+	You can do this from the Kinesis Analytics Console. From the Actions dropdown, select **Stop application**. You may recieve some emails for a minute or so after you've stopped the application.
 
 ### Next
 

@@ -100,7 +100,7 @@ Now you will use a scheduled CloudWatch Event to trigger the **Publish** Lambda 
 
 1. Click **Configure details**, type a name like **publish-sensor-data-every-min** into the **Name** box, and click **Create rule**.
 
-1. Now, if you go back to the IoT Console and Subscribe to **LifeSupportDevice/#** (IoT Core > Test > Subscribe), you should see lots of messages coming in from various hospitals.
+1. Now, if you go back to the IoT Console and Subscribe to **LifeSupportDevice/#** (IoT Core > Test > Subscribe), within a minute, you should see lots of messages coming in from various hospitals.
 
 ### Next
 
