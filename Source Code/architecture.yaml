@@ -102,7 +102,7 @@ Resources:
           KeyType: RANGE
       ProvisionedThroughput:
         ReadCapacityUnits: 50
-        WriteCapacityUnits: 5
+        WriteCapacityUnits: 50
 
   # Module 2 --------------------------------------------------------------------------------------
 
