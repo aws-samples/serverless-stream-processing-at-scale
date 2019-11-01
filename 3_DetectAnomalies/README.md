@@ -59,7 +59,7 @@ The CloudFormation template that you ran during Set Up deployed the following:
 
 1. If an anomaly score is returned above the threshold, you will be emailed at the email you provided during set up.
 
-	The threshold was determined by collecting anomaly scores from a sample data set and finding the mean anomaly score. The chosen threshold is three standard deviations above/below the mean.
+	The threshold was determined by collecting anomaly scores from a sample data set and finding the mean anomaly score. The chosen threshold is [three standard deviations above/below the mean][stdev-wiki].
 
 	You should notice that the **pulse** in the email alerts sent to you are very low (below 60). This is the anomaly that was simulated that Kinesis Analytics has picked up on!
 
@@ -75,5 +75,6 @@ The CloudFormation template that you ran during Set Up deployed the following:
 
 :white_check_mark: [Clean Up][cleanup].
 
+[stdev-wiki]: https://en.wikipedia.org/wiki/68%E2%80%9395%E2%80%9399.7_rule
 [random-cut]: https://docs.aws.amazon.com/kinesisanalytics/latest/sqlref/sqlrf-random-cut-forest.html
 [cleanup]: ../4_CleanUp/

@@ -43,7 +43,7 @@ Note the *#* wildcard at the end of the topic name. Since this company deploys m
 	}
 	```
 		
-1. You will need to **replace the # wildcard** with a value like **Hospital15** in order to Publish.
+1. You will need to **replace the # wildcard** with a value in order to Publish. The simulated data will be publishing to subtopics: **LifeSupportDevice/HospitalXX**, where the Xs are digits.
 
 	![IoT Publish Console](Screenshots/iot-publish.png)
 
@@ -55,17 +55,17 @@ Note the *#* wildcard at the end of the topic name. Since this company deploys m
 
 1. Click on the rule with **DeIdentify** in the name. It will be prefixed by the CloudFormation stack name, and there will be random characters in the suffix.
 
-1. Since the query is `SELECT * FROM 'LifeSupportDevice/#'`, all of the messages sent to the **LifeSupportDevice/#** topic trigger the Lambda function & are processed. However, you can alter this query to filter the data or send only some attributes along.
+1. Since the query is `SELECT * FROM 'LifeSupportDevice/#'`, all of the messages sent to the **LifeSupportDevice/#** topic trigger the Lambda function & are processed. However, you can alter this query to filter the data or send only some attributes.
 
 1. Now go to the **Lambda** console by clicking the **Services** dropdown in the top left corner.
 
 1. Click on the **DeIdentify** Lambda function.
 
-1. Under the **Monitoring** tab, you can see some quick stats on invocation and errors, etc. Since you only sent one message so far, you should only see one dot in each of these graphs.
+1. Under the **Monitoring** tab, you can see quick stats on invocation and errors, etc. Since you only sent one message so far, you should only see one dot in each of these graphs.
 
 	![DeIdentify Monitoring Tab](Screenshots/deidentify-monitoring.png)
 
-1. You can see some more detail about invocations by clicking on **View logs in CloudWatch**.
+1. You can see more detail about invocations by clicking on **View logs in CloudWatch**.
 
 1. Click on the latest (closest to the top) **Log Stream**.
 

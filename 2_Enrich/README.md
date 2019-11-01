@@ -16,7 +16,7 @@ To allow you to more easily monitor this section of the pipeline, a CloudWatch d
 
 1. Go to the **CloudWatch** console, go to **Dashboards**, and click on the **StreamingITL** dashboard. 
 
-1. You may have to wait a few minutes depending on when you started publishing data in the previous module, but soon you'll see points starting to show up in the dashboard. 
+1. You may have to wait a few minutes depending on when you started publishing data in the previous module, but soon you'll see points starting to show up in the dashboard. You can click the refresh button in the top right corner as needed.
 
 1. In this dashboard, you can see how fast data is coming in, and you can keep an eye out for any errors or throttling events. Here is an example from a pipeline that has been running for a few hours:
 
@@ -28,7 +28,7 @@ To allow you to more easily monitor this section of the pipeline, a CloudWatch d
 
 1. You should see two folders: **de-identified** and **enriched**. In each of these folders, you will see the de-identified data and the data enriched with device metadata respectively. These files were PUT here by Kinesis Firehose.
 
-	Kinesis Firehose batches incoming messages into files according to buffer size (MB) or time threshold (s), whichever is reached first. In this case, we chose to post a new batch file to S3 every 1 MB of data or every 60 seconds (1 minute).
+	Kinesis Firehose batches incoming messages into files according to buffer size (MB) or time threshold (s), whichever is reached first. In this case, we chose to post a new batch file to S3 every 1 MB of data or every 60 seconds.
 
 	Kinesis Firehose also PUTs the data into S3 in the following datetime file structure: `year/month/day/hour/`, so you will need to click into several folders before reaching the data file(s).
 
@@ -44,7 +44,7 @@ To allow you to more easily monitor this section of the pipeline, a CloudWatch d
 
 ### Next
 
-:white_check_mark: Continue to the second module: [Detect Anomalies][detect-anomalies].
+:white_check_mark: Continue to the third module: [Detect Anomalies][detect-anomalies].
 
 [kdg-help]: https://awslabs.github.io/amazon-kinesis-data-generator/web/help.html
 [kdg]: https://awslabs.github.io/amazon-kinesis-data-generator/web/producer.html
