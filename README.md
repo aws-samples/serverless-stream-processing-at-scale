@@ -4,9 +4,7 @@ In this workshop, you will explore several patterns for stream processing at sca
 
 Imagine that you are at a health care company that deploys equipment in hospitals across the globe. The equipment collects patient data, and you need to ingest and analyze the data at scale, in near real-time, in a HIPAA compliant manner. 
 
-In this workshop, you will deploy and explore the architecture below, which takes in simulated life support device sensor data. The PHI/PII data is stripped from the incoming data, and stored in an encrypted DynamoDB table before the rest of the data is sent farther along the pipeline. Kinesis Firehose enriches the incoming data with device metadata using a Lambda Record Transformation, and then Kinesis Anlytics calculates anomaly scores, which are used to automatically notify personnel if something is out of the ordinary.
-
-The entire architecture is serverless and uses [HIPAA-eligable services][compliance].
+In this workshop, you will deploy and explore the architecture below, which takes in simulated life support device sensor data and processes it. The entire architecture is serverless and uses [HIPAA-eligable services][compliance].
 
 ![Architecture Diagram](architecture-diagram.jpg)
 
