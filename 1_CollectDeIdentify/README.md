@@ -6,11 +6,11 @@ In this module, you'll see how you can ingest real-time sensor data into **AWS I
 
 The CloudFormation template that you ran during Set Up deployed the following:
 
+![Module 1 Architecture](Screenshots/arch-mod1.png)
+
 * A **Publish** Lambda function that simulates sensor data and publishes the data to the **LifeSupportDevice/#** IoT Core MQTT Topic.
 * A **De-Identify** Lambda function that performs the de-identification, triggered by data coming into the **LifeSupportDevice/#** MQTT Topic.
 * A **PatientReference** DynamoDB table that stores encrypted cross-reference data (PUT there by the **De-Identify** Lambda function).
-* A **Kinesis Firehose** ingesting de-identified data from the **De-Identify** Lambda function, and storing the data in batches in S3.
-* An **S3 bucket** to store the de-identified data.
 
 ### Manually Test the Pipeline
 Before you start feeding simulated data into the pipeline, you can test the pipeline manually by publishing sensor data to the **LifeSupportDevice/#** MQTT Topic. 
@@ -20,6 +20,8 @@ Note the *#* wildcard at the end of the topic name. Since this company deploys m
 1. Go to the **IoT Core** Console.
 
 1. Navigate to the **Test** tab in the left panel.
+
+1. You may see the message "We are provisioning a Device Gateway endpoint for your account..." If so, wait a few minutes.
 
 1. Type **LifeSupportDevice/#** into the **Subscription topic** text box and click **Subscribe to topic**
 
@@ -98,7 +100,7 @@ Now you will use a scheduled CloudWatch Event to trigger the **Publish** Lambda 
 
 	![CloudWatch Publish Rule](Screenshots/cloudwatch-rule.png)
 
-1. Click **Configure details**, type a name like **publish-sensor-data-every-min** into the **Name** box, and click **Create rule**.
+1. Click **Configure details**, type a name like **publish-sensor-data-every-min** into the **Name** box, and click **Create rule**. Leave the box checked so that the event is enabled.
 
 1. Now, if you go back to the IoT Console and Subscribe to **LifeSupportDevice/#** (IoT Core > Test > Subscribe), within a minute, you should see lots of messages coming in from various hospitals.
 

@@ -184,6 +184,7 @@ def lambda_handler(event, context):
             output.append(output_record)
         else:
             # we couldn't get device details: flag that as an error to firehose
+            print("ProcessingFailed: couldn't find device " + str(device_id))
             output_record = {
                 'recordId': record['recordId'],
                 'result': 'ProcessingFailed',

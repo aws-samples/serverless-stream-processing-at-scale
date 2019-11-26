@@ -1,14 +1,16 @@
 ## Detect Anomalies
 
-In this module, you'll see how you can use **Kinesis Analytics** to analyze streaming data in near real-time as it is ingested. In this case, the Random Cut Forest algorithm is used to generate anomaly scores. You'll be sent an email whenever an anomaly in the streaming data is found.
+In this module, you'll see how you can use **Kinesis Analytics** to analyze streaming data in near real-time as it is ingested. In this case, the [Random Cut Forest algorithm][random-cut] is used to generate anomaly scores. You'll be sent an email whenever an anomaly in the streaming data is found.
 
 ### What was Created
 
 The CloudFormation template that you ran during Set Up deployed the following:
 
+![Module 3 Architecture](Screenshots/arch-mod3.png)
+
 * A **Device Data Analytics** Kinesis Analytics Application, taking **IngestStream** data as an input, and calculating anomaly_scores.
 * A **OutputStream** Kinesis Firehose which takes the **Device Data Analytics** data and puts it into the S3 **sensor-data-XXXXXXXX** bucket.
-* A **Alert** Lambda function triggered from **OutputStream**, which sends an SNS notification whenever an anomaly_score above/below the threshold is found.
+* An **Alert** Lambda function triggered from **OutputStream**, which sends an SNS notification whenever an anomaly_score above/below the threshold is found.
 * A **device manufacturer** SNS Topic for email notifications
 
 ### Sign up for Notifications
@@ -23,7 +25,7 @@ The CloudFormation template that you ran during Set Up deployed the following:
 
 1. You will get an email at the address you provided. It will be titled **AWS Notification - Subscription Confirmation** from **devicemanufacturer**. Click **Confirm subscription** when you get the email. If you don't receive it within a few minutes, check your spam folder.
 	
-	![email-confirmation](Screenshots/subscription-confirmation.png)
+	![Email Confirmation](Screenshots/subscription-confirmation.png)
 
 ### Monitor the Pipeline
 
@@ -67,7 +69,9 @@ The CloudFormation template that you ran during Set Up deployed the following:
 
 1. Once you're done, you can stop the application in order to stop recieving email alerts. 
 
-	You can do this from the Kinesis Analytics Console. From the Actions dropdown, select **Stop application**. You may recieve some emails for a minute or so after you've stopped the application.
+	Go to the Kinesis Analytics Console by going to the **Kinesis** console and selecting **Data Analytics** on the left-hand side. 
+
+	From the Actions dropdown, select **Stop application**. You may recieve some emails for a minute or so after you've stopped the application.
 
 1. You can confirm that there is now an **anomaly_scores** folder in the **sensor-data-XXXXXXXX** S3 bucket with the same data you see in the **DEST_STREAM**. You'll also notice that there's an **anomaly** field with a true or false result. This indicates whether it was flagged as anomolous or not by the **Alert** Lambda function.
 

@@ -6,10 +6,12 @@ In this module, you'll see how you can enrich incoming streaming data with pre-s
 
 The CloudFormation template that you ran during Set Up deployed the following:
 
-* A **Kinesis Firehose** ingesting de-identified data.
+![Module 2 Architecture](Screenshots/arch-mod2.png)
+
+* A **Kinesis Firehose** ingesting de-identified data from the **De-Identify** Lambda function (from Module 1).
 * A **Enrich** Lambda function that looks up the metadata in Dynamo, and writes the enriched message back into the Kinesis Firehose.
 * A **DeviceDetails** DynamoDB table with metadata.
-* An **S3 bucket** to store the enriched data from Kinesis.
+* An **S3 bucket** to store the de-identified and enriched data from Kinesis.
 
 ### Monitor the Pipeline
 To allow you to more easily monitor this section of the pipeline, a CloudWatch dashboard was created that displays Lambda invocations, Kinesis Firehose records, and DynamoDB table reads.
@@ -31,6 +33,8 @@ To allow you to more easily monitor this section of the pipeline, a CloudWatch d
 	Kinesis Firehose batches incoming messages into files according to buffer size (MB) or time threshold (s), whichever is reached first. In this case, we chose to post a new batch file to S3 every 1 MB of data or every 60 seconds.
 
 	Kinesis Firehose also PUTs the data into S3 in the following datetime file structure: `year/month/day/hour/`, so you will need to click into several folders before reaching the data file(s).
+
+	You may also see a **processing-failed** folder under the **de-identified** and/or **enriched** folders. Any records that could not be properly processed will be here. This may be due to your Lambda concurrent invocation limit being too low (default soft limit is 1,000), or a failure from the lambda function itself. You can go to the Monitoring page and CloudWatch logs for the **FirehoseTransform** lambda function to investigate.
 
 1. Once you reach a data file, you can download it to view the contents. 
 
