@@ -1,5 +1,12 @@
 ## Clean Up
 
+If you are at an event that is providing pre-set up accounts, there is no need to clean up your resources at the end of the event. 
+
+Thanks for attending and please provide feedback to your presenter!
+
+<details>
+<summary><strong>Follow these steps if you are completing this workshop by yourself, or if your event isn't using pre-set up accounts</strong></summary>
+
 Since most of the architecture was created by running a CloudFormation template, you can clean up most of what you did today by deleting the CloudFormation stack. 
 
 However, CloudFormation won't delete any S3 buckets that have data in them, so first you will need to empty the S3 bucket with the sensor data in it.
@@ -27,6 +34,8 @@ You will also need to manually clean up any resources you created outside of the
 	If that happens, empty the S3 bucket again, and delete the stack once more.
 
 	![Delete Failed](Screenshots/delete-fail.png)
+	
+</details>
 
 
 

@@ -1,5 +1,10 @@
 ## Set Up
 
+If you are at an event that is providing pre-set up accounts, continue to the first module.
+
+<details>
+<summary><strong>Follow these steps if you are completing this workshop by yourself, or if your event isn't using pre-set up accounts</strong></summary>
+
 ### AWS Account
 
 In order to complete this workshop, you'll need an AWS account and permissions to access the following services:
@@ -14,16 +19,21 @@ In order to complete this workshop, you'll need an AWS account and permissions t
 * CloudWatch
 * Identity and Access Management (IAM)
 
-The code and instructions in this workshop assume only one participant is using
+#### Note
+If you have multiple accounts to choose from...
+
+> Use a personal account or create a new AWS account for this workshop rather than
+using an organization's account to ensure you have full access to the necessary
+services and to ensure you do not leave behind any resources from the workshop.
+
+> The code and instructions in this workshop assume only one participant is using
 a given AWS account at a time. If you attempt sharing an account with another
 participant, you will encounter naming conflicts for certain resources. You can
 work around this by either using a suffix in your resource names or using
 distinct Regions, but the instructions do not provide details on the changes
 required to make this work.
 
-Use a personal account or create a new AWS account for this workshop rather than
-using an organization's account to ensure you have full access to the necessary
-services and to ensure you do not leave behind any resources from the workshop.
+
 
 ### Deploy CloudFormation
 
@@ -45,11 +55,13 @@ services and to ensure you do not leave behind any resources from the workshop.
 
 1. Scroll to the bottom and check all three acknowledgement boxes.
 
-	The first two acknowledgements are there because the template will deploy IAM policies for the services in this architecture to access relevant services. The third acknowledgement is because the template uses the [AWS::Serverless Transform][CFN SAM] to define Lambda functions.
+	> The first two acknowledgements are there because the template will deploy IAM policies to allow the services in this architecture to perform their necessary actions. The third acknowledgement is because the template uses the [AWS::Serverless Transform][CFN SAM] to define Lambda functions.
 
 1. Click **Create stack**.
 
 1. The stack will take a few minutes to deploy. Wait until the stack status is **CREATE_COMPLETE** before starting the first module.
+
+</details>
 
 ### Next
 
