@@ -8,13 +8,19 @@ In this workshop, you will deploy and explore the architecture below, which take
 
 ![Architecture Diagram](architecture-diagram.jpg)
 
-### Modules
+### Workshop Structure
 
-This workshop is divided into three modules that are meant to be completed in order.
+This workshop is divided into three modules that are meant to be completed **in order**.
 
 You will not deploy the architecture manually. Instead, you will be able to explore the architecture, understand architecture patterns, and apply changes as necessary.
 
-If you are already familiar with the services in question, test your knowledge by trying to complete the workshop without reading the step-by-step instructions provided in the dropdowns.
+If you are already familiar with the services in question, as an **extra challenge**, try to complete the workshop without reading the **step-by-step instructions** provided in the dropdowns.
+
+Whatever level you're at, make sure you read the workshop fully to get the most out of it. And, if you finish ahead of time, feel free to change or add onto the pipeline to see what happens!
+
+> If you are using an account that was pre-set up for this workshop, you will have limited permissions, and may not be able to alter certain aspects of the pipeline.
+
+### Modules
 
 | | Module | Description |
 | --- | :---: | :--- |
