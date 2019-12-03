@@ -78,6 +78,8 @@ In a real-life scenario, we would want to filter this data to only send a manufa
 	You can change the data window and performance of the algorithm by adjusting the following parameters: numberOfTrees, subSampleSize, timeDecay, and shingleSize. In this case, we have chosen to leave these parameters as their [default values][rcf-params].
 	
 	Explore other built-in functions that you can apply to streaming data using Kinesis Analytics [here][kinesis-analytics-funcs].
+	
+	> You'll also notice that Kinesis Analytics SQL refers to **Streams** and **Pumps**. The streams it is refering to are in-application streams, and pumps are continuous insert queries running that insert data from one in-application stream to another in-application stream. You can read more about Kinesis Analytics Streams and Pumps [here][kinesis-analytics-streams-pumps]
 
 1. Under the **Source** tab, you can see incoming records from **IngestStream**. 
 
@@ -124,4 +126,5 @@ In a real-life scenario, we would want to filter this data to only send a manufa
 [analytic-func]: https://docs.aws.amazon.com/kinesisanalytics/latest/sqlref/sql-reference-analytic-functions.html
 [rcf-params]: https://docs.aws.amazon.com/kinesisanalytics/latest/sqlref/sqlrf-random-cut-forest.html#random-cut-forest-parameters
 [kinesis-analytics-funcs]: https://docs.aws.amazon.com/kinesisanalytics/latest/sqlref/sql-reference-functions.html
+[kinesis-analytics-streams-pumps]: https://docs.aws.amazon.com/kinesisanalytics/latest/dev/streams-pumps.html
 [cleanup]: ../4_CleanUp/
