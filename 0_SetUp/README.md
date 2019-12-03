@@ -30,27 +30,35 @@ services and to ensure you do not leave behind any resources from the workshop.
 
 [AWS CloudFormation][cloudformation] allows you to deploy infrastructure by defining an architecture in a JSON or YAML template. For this workshop, you will be deploying the architecture for all three modules with one CloudFormation template, and then you will walk through a streaming pattern in each module.
 
-1. Go to the AWS Management Console and type **CloudFormation** in the **Find Services** search bar. Click enter to go to the CloudFormation console.
+1. Deploy the template below in the Oregon (us-west-2) region.
 
-1. Make sure you're in the **Oregon** Region by checking the Region dropdown in the top right corner.
+	`https://serverless-stream-processing.s3-us-west-2.amazonaws.com/Source_Code/architecture.yaml`
+	
+	<details><summary><strong>Step by Step Instructions</strong></summary>
+
+	1. Go to the AWS Management Console and type **CloudFormation** in the **Find Services** search bar. Click enter to go to the CloudFormation console.
+
+	1. Make sure you're in the **Oregon** Region by checking the Region dropdown in the top right corner.
    
-1. Click **Create Stack**.
+	1. Click **Create Stack**.
 
-1. Under **Specify template**, insert this **Amazon S3 URL**: `https://serverless-stream-processing.s3-us-west-2.amazonaws.com/Source_Code/architecture.yaml`
+	1. Under **Specify template**, insert this **Amazon S3 URL**: `https://serverless-stream-processing.s3-us-west-2.amazonaws.com/Source_Code/architecture.yaml`
 
-1. Click **Next**.
+	1. Click **Next**.
 
-1. Type in a unique **Stack name**, like **Streaming-Workshop**.
+	1. Type in a unique **Stack name**, like **Streaming-Workshop**.
 
-1. Click **Next** twice, until you get to the **Review** page.
+	1. Click **Next** twice, until you get to the **Review** page.
 
-1. Scroll to the bottom and check all three acknowledgement boxes.
+	1. Scroll to the bottom and check all three acknowledgement boxes.
 
-	> The first two acknowledgements are there because the template will deploy IAM policies to allow the services in this architecture to perform their necessary actions. The third acknowledgement is because the template uses the [AWS::Serverless Transform][CFN SAM] to define Lambda functions.
+		> The first two acknowledgements are there because the template will deploy IAM policies to allow the services in this architecture to perform their necessary actions. The third acknowledgement is because the template uses the [AWS::Serverless Transform][CFN SAM] to define Lambda functions.
 
-1. Click **Create stack**.
+	1. Click **Create stack**.
 
-1. The stack will take a few minutes to deploy. Wait until the stack status is **CREATE_COMPLETE** before starting the first module.
+	1. The stack will take a few minutes to deploy. Wait until the stack status is **CREATE_COMPLETE** before starting the first module.
+
+	</details>
 
 </details>
 
